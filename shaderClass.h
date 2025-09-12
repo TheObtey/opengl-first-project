@@ -22,6 +22,9 @@ class Shader
 		void Activate();
 		// Supprime le Shader Program
 		void Delete();
+	private:
+		// Vérifie que les shaders ont compilé correctement
+		void compileErrors(unsigned int shader, const char* type);
 };
 
 #endif

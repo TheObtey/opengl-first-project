@@ -11,13 +11,13 @@ using namespace std;
 
 // Déclaration des coordonées des vertices
 GLfloat vertices[] =
-{
-	-0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f, // Coin inférieur gauche
-	0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f, // Coin inférieur droit
-	0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f, // Coin suppérieur
-	-0.5f / 2, 0.5f * float(sqrt(3)) / 6, 0.0f, // Intérieur gauche
-	0.5f / 2, 0.5f * float(sqrt(3)) / 6, 0.0f, // Intérieur droit
-	0.0f, -0.5f * float(sqrt(3)) / 3, 0.0f, // Intérieur bas
+{ //				COORDONNEES				/			COULEURS
+	-0.5f, -0.5f * float(sqrt(3)) / 3,     0.0f,  0.8f, 0.3f,  0.02f, // Coin inférieur droit
+	 0.5f, -0.5f * float(sqrt(3)) / 3,     0.0f,  0.8f, 0.3f,  0.02f, // Coin inférieur gauche
+	 0.0f,  0.5f * float(sqrt(3)) * 2 / 3, 0.0f,  1.0f, 0.6f,  0.32f, // Coin suppérieur
+	-0.25f, 0.5f * float(sqrt(3)) / 6,     0.0f,  0.9f, 0.45f, 0.17f, // Intérieur gauche
+	 0.25f, 0.5f * float(sqrt(3)) / 6,     0.0f,  0.9f, 0.45f, 0.17f, // Intérieur droit
+	 0.0f, -0.5f * float(sqrt(3)) / 3,     0.0f,  0.8f, 0.3f,  0.02f // Intérieur bas
 };
 
 // Déclaration du tableau d'indices, il permet de définir l'ordre dans lequel les sommets doivent être rendu.
@@ -76,13 +76,17 @@ int main()
 	// Je génère un objet Element Buffer et je l'attache aux indices
 	EBO EBO1(indices, sizeof(indices));
 
-	// Je link le VBO au VAO
-	VAO1.LinkVBO(VBO1, 0);
+	// Je link les attribus du VBO (coordonnées et couleurs) au VAO
+	VAO1.LinkAttrib(VBO1, 0, 3, GL_FLOAT, 6 * sizeof(float), (void*)0);
+	VAO1.LinkAttrib(VBO1, 1, 3, GL_FLOAT, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 
 	// J'unbind tout pour éviter de les modifier accidentellement
 	VAO1.Unbind();
 	VBO1.Unbind();
 	EBO1.Unbind();
+
+	// Récupérer l'ID de "l'uniforme" appelé "scale"
+	GLuint uniID = glGetUniformLocation(shaderProgram.ID, "scale");
 
 	// Boucle principale
 	while (!glfwWindowShouldClose(window))
@@ -92,6 +96,10 @@ int main()
 
 		// Préciser à OpenGL quel Shader Program je veux utiliser
 		shaderProgram.Activate();
+
+		// J'attribue une valeur à l'uniforme
+		// NOTE: L'attribution doit s'effectuer impérativement après avoir activé le Shader Program
+		glUniform1f(uniID, 0.5f);
 
 		// J'attache le VAO pour qu'OpenGL l'utilise
 		VAO1.Bind();
