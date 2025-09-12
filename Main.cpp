@@ -39,7 +39,18 @@ int main()
 	{
 		-0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f, // Coin inférieur gauche
 		0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f, // Coin inférieur droit
-		0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f // Coin suppérieur
+		0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f, // Coin suppérieur
+		-0.5f / 2, 0.5f * float(sqrt(3)) / 6, 0.0f, // Intérieur gauche
+		0.5f / 2, 0.5f * float(sqrt(3)) / 6, 0.0f, // Intérieur droit
+		0.0f, -0.5f * float(sqrt(3)) / 3, 0.0f, // Intérieur bas
+	};
+
+	// Déclaration du tableau d'indices, il permet de définir l'ordre dans lequel les sommets doivent être rendu.
+	GLuint indices[] =
+	{
+		0, 3, 5, // Triangle inférieur gauche
+		3, 2, 4, // Triangle inférieur droit
+		5, 4, 1 // Triangle supérieur
 	};
 
 	// Je crée une instance de l'objet GLFWwindow pour créer ma fenêtre
@@ -110,14 +121,16 @@ int main()
 	/*
 		Le VBO stocke les données brutes des sommets (positions, couleurs, UV, etc).
 		Le VAO décrit comment lire ces données et les relier aux attributs du shader.
+		L'EBO stocke les indices qui disent à OpenGL dans quel ordre dessiner les sommets.
 	*/
 
-	// Je crée une référence à des conteneurs pour le Vertex Array Object (VAO) et le Vertex Buffer Object (VBO)
-	GLuint VAO, VBO;
+	// Je crée une référence à des conteneurs pour le Vertex Array Object (VAO), le Vertex Buffer Object (VBO) et l'Element Buffer Object (EBO)
+	GLuint VAO, VBO, EBO;
 
-	// Génère le VAO et VBO avec 1 objet chacun
+	// Génère le VAO, VBO et EBO avec 1 objet chacun
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &EBO);
 
 	// Je dit à OpenGL que le VAO qu'il doit utilisé c'est l'object VAO que j'ai créé
 	glBindVertexArray(VAO);
@@ -135,6 +148,10 @@ int main()
 	*/
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
+	// J'attache l'EBO au VAO et copie mes indices de la RAM (CPU) vers la VRAM (GPU)
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
 	// J'configure le Vertex Attribute afin qu'OpenGL sache comment lire les données du VBO
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
@@ -144,6 +161,7 @@ int main()
 	// Attacher le VAO et le VBO à 0 pour éviter de modifier accidentellement le VAO ou le VBO
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	// Définis une couleur pour le background
 	glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
@@ -166,8 +184,8 @@ int main()
 		// J'attache le VAO pour qu'OpenGL l'utilise
 		glBindVertexArray(VAO);
 
-		// je dessine le triangle
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		// J'utilise glDrawElements au lieu de glDrawArrays, ce qui me permet de réutiliser les sommets via les indices de l'EBO
+		glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_INT, 0);
 
 		glfwSwapBuffers(window);
 
@@ -178,6 +196,7 @@ int main()
 	// Supprime les objets créés plus tôt
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &EBO);
 	glDeleteProgram(shaderProgram);
 
 	// Supprime la fenêtre avant de terminer le programme
