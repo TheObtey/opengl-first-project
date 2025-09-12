@@ -2,23 +2,31 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include"shaderClass.h"
+#include"VAO.h"
+#include"VBO.h"
+#include"EBO.h"
+
 using namespace std;
 
-// Code source du Vertex Shader
-const char* vertexShaderSource = "#version 330 core\n"
-"layout (location = 0) in vec3 aPos;\n"
-"void main()\n"
-"{\n"
-"	gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-"}\0";
+// Déclaration des coordonées des vertices
+GLfloat vertices[] =
+{
+	-0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f, // Coin inférieur gauche
+	0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f, // Coin inférieur droit
+	0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f, // Coin suppérieur
+	-0.5f / 2, 0.5f * float(sqrt(3)) / 6, 0.0f, // Intérieur gauche
+	0.5f / 2, 0.5f * float(sqrt(3)) / 6, 0.0f, // Intérieur droit
+	0.0f, -0.5f * float(sqrt(3)) / 3, 0.0f, // Intérieur bas
+};
 
-// Code source du Fragment Shader
-const char* fragmentShaderSource = "#version 330 core\n"
-"out vec4 FragColor;\n"
-"void main()\n"
-"{\n"
-"	FragColor = vec4(0.8f, 0.3f, 0.02f, 1.0f);\n"
-"}\n\0";
+// Déclaration du tableau d'indices, il permet de définir l'ordre dans lequel les sommets doivent être rendu.
+GLuint indices[] =
+{
+	0, 3, 5, // Triangle inférieur gauche
+	3, 2, 4, // Triangle inférieur droit
+	5, 4, 1 // Triangle supérieur
+};
 
 int main()
 {
@@ -33,25 +41,6 @@ int main()
 	// Je précise à GLFW que j'utilise le CORE profile
 	// En gros c'est pour dire qu'on utilisera que les fonctions récentes
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-	// Déclaration des coordonées des vertices
-	GLfloat vertices[] =
-	{
-		-0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f, // Coin inférieur gauche
-		0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f, // Coin inférieur droit
-		0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f, // Coin suppérieur
-		-0.5f / 2, 0.5f * float(sqrt(3)) / 6, 0.0f, // Intérieur gauche
-		0.5f / 2, 0.5f * float(sqrt(3)) / 6, 0.0f, // Intérieur droit
-		0.0f, -0.5f * float(sqrt(3)) / 3, 0.0f, // Intérieur bas
-	};
-
-	// Déclaration du tableau d'indices, il permet de définir l'ordre dans lequel les sommets doivent être rendu.
-	GLuint indices[] =
-	{
-		0, 3, 5, // Triangle inférieur gauche
-		3, 2, 4, // Triangle inférieur droit
-		5, 4, 1 // Triangle supérieur
-	};
 
 	// Je crée une instance de l'objet GLFWwindow pour créer ma fenêtre
 	GLFWwindow* window = glfwCreateWindow(800, 800, "YoutubeOpenGL", NULL, NULL);
@@ -73,104 +62,27 @@ int main()
 	// Je définis le viewport d'OpenGL dans la fenêtre
 	glViewport(0, 0, 800, 800);
 
-	/*
-		Le vertex shader s’occupe des sommets des objets.
-		Chaque point qui compose un modèle passe dedans, et lui va calculer
-		sa position finale (par exemple appliquer les matrices de transformation, projection, etc.).
-		Il peut aussi préparer des infos comme la couleur ou
-		les coordonnées de texture pour les passer plus loin.
+	// Je crée un objet de la class Shader et passe en paramètre
+	// le chemin vers le code source du Vertex Shader et du Fragment Shader
+	Shader shaderProgram("default.vert", "default.frag");
 
-		Le fragment shader  travaille après.
-		Chaque pixel candidat à l’écran (aussi appelé “fragment”) passe dedans,
-		et c’est lui qui décide de la couleur finale affichée à cet endroit.
-		C’est avec lui qu'on gère la lumière, les textures, les ombres, etc.
-	*/
+	// Je génère un objet Vertex Array et le bind
+	VAO VAO1;
+	VAO1.Bind();
 
-	// Je crée un objet référence pour le Vertex Shader
-	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	// J'attache le code source du Vertex Shader à mon objet vertexShader
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	// Je compile le code source du vertexShader en code machine
-	glCompileShader(vertexShader);
+	// Je génère un objet Vertex Buffer et je l'attache aux vetices
+	VBO VBO1(vertices, sizeof(vertices));
+	
+	// Je génère un objet Element Buffer et je l'attache aux indices
+	EBO EBO1(indices, sizeof(indices));
 
-	// Même étapes pour le Fragment Shader
-	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-	glCompileShader(fragmentShader);
+	// Je link le VBO au VAO
+	VAO1.LinkVBO(VBO1, 0);
 
-	/*
-		Un shader program c’est un programme qu'on envoie
-		à la carte graphique pour lui dire exactement comment traiter tes données.
-		Il est composé du Vertex Shader et du Fragment Shader. 
-	*/
-
-	// Je crée un objet référence pour le Shader Program
-	GLuint shaderProgram = glCreateProgram();
-
-	// J'attache le Vertex et Fragment Shader à mon Shader Program
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-
-	// J'attache/Link tout les shaders enssemble à l'intérieur de mon Shader Program
-	glLinkProgram(shaderProgram);
-
-	// Maintenant que j'ai un Shader Program, je supprime les deux shaders qui n'ont plus d'utilité
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-
-	/*
-		Le VBO stocke les données brutes des sommets (positions, couleurs, UV, etc).
-		Le VAO décrit comment lire ces données et les relier aux attributs du shader.
-		L'EBO stocke les indices qui disent à OpenGL dans quel ordre dessiner les sommets.
-	*/
-
-	// Je crée une référence à des conteneurs pour le Vertex Array Object (VAO), le Vertex Buffer Object (VBO) et l'Element Buffer Object (EBO)
-	GLuint VAO, VBO, EBO;
-
-	// Génère le VAO, VBO et EBO avec 1 objet chacun
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
-
-	// Je dit à OpenGL que le VAO qu'il doit utilisé c'est l'object VAO que j'ai créé
-	glBindVertexArray(VAO);
-
-	// J'attache le VBO en précisant que c'est un GL_ARRAY_BUFFER
-	// En gros, je dis à OpenGL de considéré mon conteneur VBO comme un tableau de vertex data
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-	// Copie de mon VBO de la mémoire CPU vers la mémoire GPU
-	/*
-		GL_ARRAY_BUFFER: Dit à OpenGL que le buffer qu'on remplit, c'est un VBO de type données de sommets.
-		sizeof(vertices): La taille totale des données à envoyé (en octets).
-		vertices: L'adresse du tableau en RAM qui contient les sommets.
-		GL_STATIC_DRAW: C'est un hint pour OpenGL, pour lui dire que les données vont peu changer (optimisation).
-	*/
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	// J'attache l'EBO au VAO et copie mes indices de la RAM (CPU) vers la VRAM (GPU)
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-	// J'configure le Vertex Attribute afin qu'OpenGL sache comment lire les données du VBO
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-
-	// J'active le Vertex Attribue en plaçant un 0 dans le pipeline, ainsi OpenGL comprend qu'il faut l'utiliser
-	glEnableVertexAttribArray(0);
-
-	// Attacher le VAO et le VBO à 0 pour éviter de modifier accidentellement le VAO ou le VBO
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-	// Définis une couleur pour le background
-	glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
-
-	// Je vide le back buffer et lui assigne la nouvelle couleur
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	// J'intervertis le back buffer avec le front buffer
-	glfwSwapBuffers(window);
+	// J'unbind tout pour éviter de les modifier accidentellement
+	VAO1.Unbind();
+	VBO1.Unbind();
+	EBO1.Unbind();
 
 	// Boucle principale
 	while (!glfwWindowShouldClose(window))
@@ -178,11 +90,11 @@ int main()
 		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		// Préciser à OpenGL quel Shader Program utiliser
-		glUseProgram(shaderProgram);
+		// Préciser à OpenGL quel Shader Program je veux utiliser
+		shaderProgram.Activate();
 
 		// J'attache le VAO pour qu'OpenGL l'utilise
-		glBindVertexArray(VAO);
+		VAO1.Bind();
 
 		// J'utilise glDrawElements au lieu de glDrawArrays, ce qui me permet de réutiliser les sommets via les indices de l'EBO
 		glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_INT, 0);
@@ -194,10 +106,10 @@ int main()
 	}
 
 	// Supprime les objets créés plus tôt
-	glDeleteVertexArrays(1, &VAO);
-	glDeleteBuffers(1, &VBO);
-	glDeleteBuffers(1, &EBO);
-	glDeleteProgram(shaderProgram);
+	VAO1.Delete();
+	VBO1.Delete();
+	EBO1.Delete();
+	shaderProgram.Delete();
 
 	// Supprime la fenêtre avant de terminer le programme
 	glfwDestroyWindow(window);
