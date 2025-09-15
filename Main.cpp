@@ -2,29 +2,41 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include<stb/stb_image.h>
+#include<glm/glm.hpp>
+#include<glm/gtc/matrix_transform.hpp>
+#include<glm/gtc/type_ptr.hpp>
 
 #include"Texture.h"
 #include"shaderClass.h"
 #include"VAO.h"
 #include"VBO.h"
 #include"EBO.h"
+#include"Camera.h"
 
 using namespace std;
+
+const unsigned int width = 800;
+const unsigned int height = 800;
 
 // Déclaration des coordonées des vertices
 GLfloat vertices[] =
 { //	COORDONNEES		/		COULEURS		/		UV
-	-0.5f, -0.5f, 0.0f,		1.0f, 0.0f, 0.0f,		0.0f, 0.0f, // Coin inférieur droit
-	-0.5f,  0.5f, 0.0f,		0.0f, 1.0f, 0.0f,		0.0f, 1.0f, // Coin supérieur droit
-	 0.5f,  0.5f, 0.0f,		0.0f, 0.0f, 1.0f,		1.0f, 1.0f, // Coin suppérieur gauche
-	 0.5f, -0.5f, 0.0f,		1.0f, 1.0f, 1.0f,		1.0f, 0.0f, // Coin inférieur gauche
+	-0.5f,  0.0f,  0.5f,	 0.83f, 0.70f, 0.44f,	  0.0f, 0.0f,
+	-0.5f,  0.0f, -0.5f,	 0.83f, 0.70f, 0.44f,	  5.0f, 0.0f,
+	 0.5f,  0.0f, -0.5f,	 0.83f, 0.70f, 0.44f,	  0.0f, 0.0f,
+	 0.5f,  0.0f,  0.5f,	 0.83f, 0.70f, 0.44f,	  5.0f, 0.0f,
+	 0.0f,  0.8f,  0.0f,	 0.92f, 0.86f, 0.76f,	  2.5f, 5.0f
 };
 
 // Déclaration du tableau d'indices, il permet de définir l'ordre dans lequel les sommets doivent être rendu.
 GLuint indices[] =
 {
-	0, 2, 1, // Triangle supérieur
-	0, 3, 2 // Triangle inférieur
+	0, 1, 2,
+	0, 2, 3,
+	0, 1, 4,
+	1, 2, 4,
+	2, 3, 4,
+	3, 0, 4
 };
 
 int main()
@@ -42,7 +54,7 @@ int main()
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// Je crée une instance de l'objet GLFWwindow pour créer ma fenêtre
-	GLFWwindow* window = glfwCreateWindow(800, 800, "YoutubeOpenGL", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(width, height, "YoutubeOpenGL", NULL, NULL);
 
 	// Je vérifie que la fenêtre est bien créé
 	if (!window)
@@ -59,7 +71,7 @@ int main()
 	gladLoadGL();
 
 	// Je définis le viewport d'OpenGL dans la fenêtre
-	glViewport(0, 0, 800, 800);
+	glViewport(0, 0, width, height);
 
 	// Je crée un objet de la class Shader et passe en paramètre
 	// le chemin vers le code source du Vertex Shader et du Fragment Shader
@@ -85,29 +97,31 @@ int main()
 	VBO1.Unbind();
 	EBO1.Unbind();
 
-	// Récupérer l'ID de "l'uniforme" appelé "scale"
-	GLuint uniID = glGetUniformLocation(shaderProgram.ID, "scale");
-
 	// J'utilise ma classe "Texture" pour afficher une image
 	Texture finn("finn.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
 	finn.texUnit(shaderProgram, "tex0", 0);
 
-	GLuint tex0Uni = glGetUniformLocation(shaderProgram.ID, "tex0");
-	shaderProgram.Activate();
-	glUniform1i(tex0Uni, 0);
+	// J'active le "Depth Buffer"
+	glEnable(GL_DEPTH_TEST);
+
+	// Je créer l'objet Camera
+	Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
 
 	// Boucle principale
 	while (!glfwWindowShouldClose(window))
 	{
+		// Préciser la couleur du background
 		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		// Vider le back buffer et assigner une nouvelle couleur (j'en profite pour clear également le depth buffer)
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Préciser à OpenGL quel Shader Program je veux utiliser
 		shaderProgram.Activate();
 
-		// J'attribue une valeur à l'uniforme
-		// NOTE: L'attribution doit s'effectuer impérativement après avoir activé le Shader Program
-		glUniform1f(uniID, 0.5f);
+		// Je capture les inputs de la fenêtre pour intéragir avec la caméra
+		camera.Inputs(window);
+		// J'update et j'exporte la matrice de la caméra dans le Vertex Shader
+		camera.Matrix(45.0f, 0.1f, 100.0f, shaderProgram, "camMatrix");
 
 		// J'attache la texture pour qu'elle apparaîsse durant le rendu
 		finn.Bind();
@@ -116,7 +130,7 @@ int main()
 		VAO1.Bind();
 
 		// J'utilise glDrawElements au lieu de glDrawArrays, ce qui me permet de réutiliser les sommets via les indices de l'EBO
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(int), GL_UNSIGNED_INT, 0);
 
 		glfwSwapBuffers(window);
 
