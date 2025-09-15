@@ -36,8 +36,9 @@ class Camera
 		// Constructeur de la caméra
 		Camera(int width, int height, glm::vec3 position);
 
-		// Fonction pour update et envoyer la matrice de la caméra vers le Vertex Shader
+		// Update et envoi la matrice de la caméra (camMatrix) vers le Vertex Shader
 		void UpdateMatrix(float FOVdeg, float nearPlane, float farPlane);
+		// Exporte la camMatrix vers un shader
 		void Matrix(Shader& shader, const char* uniform);
 		// Gère les inputs de la fenêtre pour contrôler la caméra
 		void Inputs(GLFWwindow* window);

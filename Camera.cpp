@@ -20,6 +20,7 @@ void Camera::UpdateMatrix(float FOVdeg, float nearPlane, float farPlane)
 	// Calcul pour ajouter la perspective à la scène
 	projection = glm::perspective(glm::radians(FOVdeg), (float)(width / height), nearPlane, farPlane);
 
+	// Déclarer la nouvelle matrice de caméra
 	cameraMatrix = projection * view;
 };
 

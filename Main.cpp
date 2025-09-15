@@ -20,12 +20,27 @@ const unsigned int height = 800;
 
 // Déclaration des coordonées des vertices (pyramide)
 GLfloat vertices[] =
-{ //	COORDONNEES		/		COULEURS		/		UV
-	-0.5f,  0.0f,  0.5f,	 0.83f, 0.70f, 0.44f,	  0.0f, 0.0f,
-	-0.5f,  0.0f, -0.5f,	 0.83f, 0.70f, 0.44f,	  5.0f, 0.0f,
-	 0.5f,  0.0f, -0.5f,	 0.83f, 0.70f, 0.44f,	  0.0f, 0.0f,
-	 0.5f,  0.0f,  0.5f,	 0.83f, 0.70f, 0.44f,	  5.0f, 0.0f,
-	 0.0f,  0.8f,  0.0f,	 0.92f, 0.86f, 0.76f,	  2.5f, 5.0f
+{ //	COORDONNEES		/		 COULEURS		/		UV		 /		NORMALS
+	-0.5f,  0.0f,  0.5f,    0.83f, 0.70f, 0.44f,	0.0f, 0.0f,    0.0f, -1.0f,  0.0f, // Bottom side
+	-0.5f,  0.0f, -0.5f,    0.83f, 0.70f, 0.44f,	0.0f, 5.0f,    0.0f, -1.0f,  0.0f, // Bottom side
+	 0.5f,  0.0f, -0.5f,    0.83f, 0.70f, 0.44f,	5.0f, 5.0f,    0.0f, -1.0f,  0.0f, // Bottom side
+	 0.5f,  0.0f,  0.5f,    0.83f, 0.70f, 0.44f,	5.0f, 0.0f,    0.0f, -1.0f,  0.0f, // Bottom side
+
+	-0.5f,  0.0f,  0.5f,    0.83f, 0.70f, 0.44f,	0.0f, 0.0f,   -0.8f,  0.5f,  0.0f, // Left Side
+	-0.5f,  0.0f, -0.5f,    0.83f, 0.70f, 0.44f,	5.0f, 0.0f,   -0.8f,  0.5f,  0.0f, // Left Side
+	 0.0f,  0.8f,  0.0f,    0.92f, 0.86f, 0.76f,	2.5f, 5.0f,   -0.8f,  0.5f,  0.0f, // Left Side
+
+	-0.5f,  0.0f, -0.5f,    0.83f, 0.70f, 0.44f,	5.0f, 0.0f,    0.0f,  0.5f, -0.8f, // Non-facing side
+	 0.5f,  0.0f, -0.5f,    0.83f, 0.70f, 0.44f,	0.0f, 0.0f,    0.0f,  0.5f, -0.8f, // Non-facing side
+	 0.0f,  0.8f,  0.0f,    0.92f, 0.86f, 0.76f,	2.5f, 5.0f,    0.0f,  0.5f, -0.8f, // Non-facing side
+
+	 0.5f,  0.0f, -0.5f,    0.83f, 0.70f, 0.44f,	0.0f, 0.0f,    0.8f,  0.5f,  0.0f, // Right side
+	 0.5f,  0.0f,  0.5f,    0.83f, 0.70f, 0.44f,	5.0f, 0.0f,    0.8f,  0.5f,  0.0f, // Right side
+	 0.0f,  0.8f,  0.0f,    0.92f, 0.86f, 0.76f,	2.5f, 5.0f,    0.8f,  0.5f,  0.0f, // Right side
+
+	 0.5f,  0.0f,  0.5f,	0.83f, 0.70f, 0.44f,	5.0f, 0.0f,	   0.0f,  0.5f,  0.8f, // Facing side
+ 	-0.5f,  0.0f,  0.5f,	0.83f, 0.70f, 0.44f,	0.0f, 0.0f,	   0.0f,  0.5f,  0.8f, // Facing side
+   	 0.0f,  0.8f,  0.0f,	0.92f, 0.86f, 0.76f,	2.5f, 5.0f,	   0.0f,  0.5f,  0.8f  // Facing side
 };
 
 // Déclaration du tableau d'indices, il permet de définir l'ordre dans lequel les sommets doivent être rendu.
@@ -33,10 +48,10 @@ GLuint indices[] =
 {
 	0, 1, 2,
 	0, 2, 3,
-	0, 1, 4,
-	1, 2, 4,
-	2, 3, 4,
-	3, 0, 4
+	4, 6, 5,
+	7, 9, 8,
+	10, 12, 11,
+	13, 15, 14
 };
 
 // Déclaration des coordonées des vertices de ma source de lumière
@@ -117,9 +132,10 @@ int main()
 	EBO EBO1(indices, sizeof(indices));
 
 	// Je link les attribus du VBO (coordonnées et couleurs) au VAO
-	VAO1.LinkAttrib(VBO1, 0, 3, GL_FLOAT, 8 * sizeof(float), (void*)0);
-	VAO1.LinkAttrib(VBO1, 1, 3, GL_FLOAT, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-	VAO1.LinkAttrib(VBO1, 2, 2, GL_FLOAT, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	VAO1.LinkAttrib(VBO1, 0, 3, GL_FLOAT, 11 * sizeof(float), (void*)0);
+	VAO1.LinkAttrib(VBO1, 1, 3, GL_FLOAT, 11 * sizeof(float), (void*)(3 * sizeof(float)));
+	VAO1.LinkAttrib(VBO1, 2, 2, GL_FLOAT, 11 * sizeof(float), (void*)(6 * sizeof(float)));
+	VAO1.LinkAttrib(VBO1, 3, 3, GL_FLOAT, 11 * sizeof(float), (void*)(8 * sizeof(float)));
 
 	// J'unbind tout pour éviter de les modifier accidentellement
 	VAO1.Unbind();
@@ -143,7 +159,7 @@ int main()
 	lightEBO.Unbind();
 
 	// Je définis une couelur pour ma source de lumière
-	glm::vec4 lightColor = glm::vec4(1.0f, 0.6f, 0.6f, 1.0f);
+	glm::vec4 lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// Position de ma source de lumière
 	glm::vec3 lightPos = glm::vec3(0.5f, 0.5f, 0.5f);
@@ -162,6 +178,7 @@ int main()
 	shaderProgram.Activate();
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "model"), 1, GL_FALSE, glm::value_ptr(pyramidModel));
 	glUniform4f(glGetUniformLocation(shaderProgram.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
+	glUniform3f(glGetUniformLocation(shaderProgram.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
 
 	// J'utilise ma classe "Texture" pour afficher une image
 	Texture finn("finn.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
@@ -189,7 +206,10 @@ int main()
 		// Préciser à OpenGL quel Shader Program je veux utiliser
 		shaderProgram.Activate();
 
-		// do shit
+		// J'exporte la position de la caméra vers le Fragment Shader pour calculer le Specular Lightning
+		glUniform3f(glGetUniformLocation(shaderProgram.ID, "camPos"), camera.Position.x, camera.Position.y, camera.Position.z);
+
+		// J'exporte la camMatrix vers le Vertex Shader de la pyramide
 		camera.Matrix(shaderProgram, "camMatrix");
 
 		// J'attache la texture pour qu'elle apparaîsse durant le rendu
@@ -203,6 +223,7 @@ int main()
 
 		lightShader.Activate();
 		
+		// J'exporte la camMatrix vers le Vertex Shader de la source de lumière
 		camera.Matrix(lightShader, "camMatrix");
 		
 		lightVAO.Bind();
@@ -221,6 +242,11 @@ int main()
 	EBO1.Delete();
 	finn.Delete();
 	shaderProgram.Delete();
+	
+	lightVAO.Delete();
+	lightVBO.Delete();
+	lightEBO.Delete();
+	lightShader.Delete();
 
 	// Supprime la fenêtre avant de terminer le programme
 	glfwDestroyWindow(window);
