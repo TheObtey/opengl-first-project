@@ -18,7 +18,7 @@ using namespace std;
 const unsigned int width = 800;
 const unsigned int height = 800;
 
-// Déclaration des coordonées des vertices
+// Déclaration des coordonées des vertices (pyramide)
 GLfloat vertices[] =
 { //	COORDONNEES		/		COULEURS		/		UV
 	-0.5f,  0.0f,  0.5f,	 0.83f, 0.70f, 0.44f,	  0.0f, 0.0f,
@@ -37,6 +37,35 @@ GLuint indices[] =
 	1, 2, 4,
 	2, 3, 4,
 	3, 0, 4
+};
+
+// Déclaration des coordonées des vertices de ma source de lumière
+GLfloat lightVertices[] =
+{
+	-0.1f, -0.1f,  0.1f,
+	-0.1f, -0.1f, -0.1f,
+	 0.1f, -0.1f, -0.1f,
+	 0.1f, -0.1f,  0.1f,
+	-0.1f,  0.1f,  0.1f,
+	-0.1f,  0.1f, -0.1f,
+	 0.1f,  0.1f, -0.1f,
+	 0.1f,  0.1f,  0.1f
+};
+
+GLuint lightIndices[] =
+{
+	0, 1, 2,
+	0, 2, 3,
+	0, 4, 7,
+	0, 7, 3,
+	3, 7, 6,
+	3, 6, 2,
+	2, 6, 5,
+	2, 5, 1,
+	1, 5, 4,
+	1, 4, 0,
+	4, 5, 6,
+	4, 6, 7
 };
 
 int main()
@@ -97,6 +126,43 @@ int main()
 	VBO1.Unbind();
 	EBO1.Unbind();
 
+	// Je crée un objet de la class Shader et passe en paramètre
+	// le chemin vers le code source du Vertex Shader et du Fragment Shader (pour la source de lumière)
+	Shader lightShader("light.vert", "light.frag");
+
+	VAO lightVAO;
+	lightVAO.Bind();
+
+	VBO lightVBO(lightVertices, sizeof(lightVertices));
+	EBO lightEBO(lightIndices, sizeof(lightIndices));
+
+	lightVAO.LinkAttrib(lightVBO, 0, 3, GL_FLOAT, 3 * sizeof(float), (void*)0);
+
+	lightVAO.Unbind();
+	lightVBO.Unbind();
+	lightEBO.Unbind();
+
+	// Je définis une couelur pour ma source de lumière
+	glm::vec4 lightColor = glm::vec4(1.0f, 0.6f, 0.6f, 1.0f);
+
+	// Position de ma source de lumière
+	glm::vec3 lightPos = glm::vec3(0.5f, 0.5f, 0.5f);
+	glm::mat4 lightModel = glm::mat4(1.0f);
+	lightModel = glm::translate(lightModel, lightPos);
+
+	// Position de ma pyramide
+	glm::vec3 pyramidPos = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::mat4 pyramidModel = glm::mat4(1.0f);
+	pyramidModel = glm::translate(pyramidModel, pyramidPos);
+
+	// J'active le lightShader et j'injecte la couleur de ma source de lumière
+	lightShader.Activate();
+	glUniformMatrix4fv(glGetUniformLocation(lightShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(lightModel));
+	glUniform4f(glGetUniformLocation(lightShader.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
+	shaderProgram.Activate();
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "model"), 1, GL_FALSE, glm::value_ptr(pyramidModel));
+	glUniform4f(glGetUniformLocation(shaderProgram.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
+
 	// J'utilise ma classe "Texture" pour afficher une image
 	Texture finn("finn.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
 	finn.texUnit(shaderProgram, "tex0", 0);
@@ -115,13 +181,16 @@ int main()
 		// Vider le back buffer et assigner une nouvelle couleur (j'en profite pour clear également le depth buffer)
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Préciser à OpenGL quel Shader Program je veux utiliser
-		shaderProgram.Activate();
-
 		// Je capture les inputs de la fenêtre pour intéragir avec la caméra
 		camera.Inputs(window);
 		// J'update et j'exporte la matrice de la caméra dans le Vertex Shader
-		camera.Matrix(45.0f, 0.1f, 100.0f, shaderProgram, "camMatrix");
+		camera.UpdateMatrix(45.0f, 0.1f, 100.0f);
+		
+		// Préciser à OpenGL quel Shader Program je veux utiliser
+		shaderProgram.Activate();
+
+		// do shit
+		camera.Matrix(shaderProgram, "camMatrix");
 
 		// J'attache la texture pour qu'elle apparaîsse durant le rendu
 		finn.Bind();
@@ -131,6 +200,14 @@ int main()
 
 		// J'utilise glDrawElements au lieu de glDrawArrays, ce qui me permet de réutiliser les sommets via les indices de l'EBO
 		glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(int), GL_UNSIGNED_INT, 0);
+
+		lightShader.Activate();
+		
+		camera.Matrix(lightShader, "camMatrix");
+		
+		lightVAO.Bind();
+
+		glDrawElements(GL_TRIANGLES, sizeof(lightIndices) / sizeof(int), GL_UNSIGNED_INT, 0);
 
 		glfwSwapBuffers(window);
 

@@ -22,6 +22,7 @@ class Camera
 		glm::vec3 Position;
 		glm::vec3 Orientation = glm::vec3(0.0f, 0.0f, -1.0f);
 		glm::vec3 Up = glm::vec3(0.0f, 1.0f, 0.0f);
+		glm::mat4 cameraMatrix = glm::mat4(1.0f);
 
 		// Sers à empêcher le spam clique pour bouger la caméra
 		bool firstClick = true;
@@ -36,7 +37,8 @@ class Camera
 		Camera(int width, int height, glm::vec3 position);
 
 		// Fonction pour update et envoyer la matrice de la caméra vers le Vertex Shader
-		void Matrix(float FOVdeg, float nearPlane, float farPlane, Shader& shader, const char* uniform);
+		void UpdateMatrix(float FOVdeg, float nearPlane, float farPlane);
+		void Matrix(Shader& shader, const char* uniform);
 		// Gère les inputs de la fenêtre pour contrôler la caméra
 		void Inputs(GLFWwindow* window);
 };
